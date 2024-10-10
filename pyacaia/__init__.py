@@ -19,17 +19,18 @@ logging.getLogger('pygatt').setLevel(logging.WARNING)
 HEADER1 = 0xef
 HEADER2 = 0xdd
 
-def find_acaia_devices(timeout=3,backend='bluepy'):
+DEVICE_START_NAMES = [
+    'ACAIA',
+    'PYXIS',
+    'LUNAR',
+    'PROCH',
+    'FELICITA'
+]
+
+def find_acaia_devices(timeout=3,backend='bluepy', devices_start_names=DEVICE_START_NAMES):
 
     addresses=[]
     print('Looking for ACAIA devices...')
-
-    devices_start_names = [
-        'ACAIA',
-        'PYXIS',
-        'LUNAR',
-        'PROCH'
-    ]
 
     if backend=='pygatt':
         try:
@@ -54,11 +55,7 @@ def find_acaia_devices(timeout=3,backend='bluepy'):
         try:
             from bluepy.btle import Scanner, DefaultDelegate
 
-            class ScanDelegate(DefaultDelegate):
-                def __init__(self):
-                    DefaultDelegate.__init__(self)
-
-            scanner = Scanner().withDelegate(ScanDelegate())
+            scanner = Scanner()
             devices = scanner.scan(timeout)
 
             addresses=[]
@@ -104,9 +101,6 @@ class Queue(object):
 
         self.running=False
 
-
-    def next(self):
-        return dequeue(self)
 
 class CommandQueue(object):
     
@@ -179,7 +173,7 @@ class Message(object):
 
     def _decode_weight(self,weight_payload):
         value= ((weight_payload[1] & 0xff) << 8) + (weight_payload[0] & 0xff)
-        unit=  weight_payload[4] & 0xFF;
+        unit=  weight_payload[4] & 0xFF
         if (unit == 1): value /= 10.0
         elif (unit == 2): value /= 100.0
         elif (unit == 3): value /= 1000.0
@@ -747,7 +741,7 @@ def main():
 
     time.sleep(1)
     if addresses:
-        print_acaia_characteristics(addresses[0])
+        logging.debug(addresses[0])
     else:
         print('No Acaia devices found')
 
